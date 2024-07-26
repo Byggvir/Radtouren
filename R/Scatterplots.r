@@ -44,6 +44,7 @@ WD <- paste(SD[1:(length(SD)-1)],collapse='/')
 setwd(WD)
 
 source("R/lib/myfunctions.r")
+source("R/lib/tourdata.r")
 source("R/lib/sql.r")
 
 outdir <- 'png/'
@@ -63,89 +64,20 @@ td <- Sys.time()
 
 # get data
 
-json2dt <- function (fJSON, N = 1 ) {
-  
-  # Init data table
-  
-  n = length(fJSON$locations)
-  
-  cat(N,' ',  n, '\n' )
-  
-  temp = data.table(
-      tn = rep(N,n) # tournumber
-    , aw = rep( '', n ) #Alarm
-    , lat  = rep(0,n) # la
-    , lon = rep(0,n) # lo
-    , ele = rep(0,n) # ge
-    , distance  = rep(0,n) # gd
-    , slope     = rep(0,n) # sl 
-    , speed     = rep(0,n) # sp
-    , cadence   = rep(0,n) # cp
-    
-    , motor_p   = rep(0,n) # mw
-    , rider_p   = rep(0,n) # rw
-    , tm        = rep(0,n) # tm
-    , ts        = rep(Sys.time(),n) # ts
-    
-  )
-  
-  print(nrow(temp))
-  
-  # if (n > 1000) { n = 1005  }
-  
-  for (i in 1:n ) {
-    
-    if ( ! is_empty(which( "cp" == names(fJSON$locations[[i]] ) ) ) ) {
-      temp$lat[i]       = fJSON$locations[[i]]$la
-      temp$lon[i]       = fJSON$locations[[i]]$lo
-      temp$ele[i]       = fJSON$locations[[i]]$ge
-      temp$distance[i]  = fJSON$locations[[i]]$gd
-      temp$slope[i]     = fJSON$locations[[i]]$sl
-      
-      temp$speed[i]   = fJSON$locations[[i]]$sp
-      temp$cadence[i] = fJSON$locations[[i]]$cp
-      
-      temp$motor_p[i] = fJSON$locations[[i]]$mw
-      temp$rider_p[i] = fJSON$locations[[i]]$rw
-      temp$tm[i]       = fJSON$locations[[i]]$tm
-      temp$ts[i]       = as_datetime(fJSON$locations[[i]]$ts, tz = 'Europe/Berlin')
-      
-    }
-    else {
-      temp$aw[i] = 'PAUSE' 
-      }
-  }
-  
-  return(temp)
-  
-}
-
 citation <- paste( '(cc by 4.0) 2024 by Thomas Arend; Stand:', heute)
 
-fnames = dir('data', pattern = '*.json')
+#
+# Get tours from data/*.json
+#
 
-nj <- jsonlite::read_json( paste0('data/',fnames[1]) ) 
-tour <- json2dt(nj, N = 1)
-
-stitle <- nj$activity_name
-
-for ( j in 2:length(fnames)) {
-  
-  nj <- jsonlite::read_json( paste0('data/', fnames[j] ) )
-  nt <- json2dt( nj, N = j )
-  tour <- rbind( tour, nt )
-  stitle <- c( stitle, nj$activity_name )
-  
-  }
-
-tour$tn = factor( tour$tn, levels = unique(tour$tn), labels= stitle )
-
+tour = read_touren( fnames = dir('data', pattern = '*.json') )
+stitle = tour$titles
 
   #
   # Scatterplots
   #
 
-  tour %>%
+  tour$touren %>%
     filter( speed > 0 & cadence > 0 & aw != 'PAUSE' ) %>%
     ggplot( aes( x = cadence , y = speed, group = tn, colour = tn ) ) +
     geom_point(
@@ -168,7 +100,7 @@ tour$tn = factor( tour$tn, levels = unique(tour$tn), labels= stitle )
            , units = "px"
            , dpi = 144 )
 
-  tour %>%
+  tour$touren %>%
     filter( cadence > 0 & rider_p > 0 & aw != 'PAUSE'  ) %>%
     ggplot( aes( x = cadence , y = rider_p, group = tn, colour = tn ) ) +
     geom_point(
@@ -191,7 +123,7 @@ tour$tn = factor( tour$tn, levels = unique(tour$tn), labels= stitle )
            , units = "px"
            , dpi = 144 )
 
-  tour %>%
+  tour$touren %>%
     filter( speed > 0 & rider_p > 0 & aw != 'PAUSE' ) %>%
     ggplot( aes( x = speed , y = rider_p, group = tn, colour = tn ) ) +
     geom_point(
@@ -214,7 +146,7 @@ tour$tn = factor( tour$tn, levels = unique(tour$tn), labels= stitle )
            , units = "px"
            , dpi = 144 )
 
-  tour %>%
+  tour$touren %>%
     filter( aw != 'PAUSE' ) %>%
     ggplot( aes( x = slope , y = rider_p, group = tn, colour = tn ) ) +
     geom_point(
@@ -238,7 +170,7 @@ tour$tn = factor( tour$tn, levels = unique(tour$tn), labels= stitle )
            , dpi = 144 )
 
 
-  tour %>%
+  tour$touren %>%
     filter( speed > 0 & aw != 'PAUSE' ) %>%
     ggplot( aes( x = slope , y = speed, group = tn, colour = tn ) ) +
     geom_smooth ( 

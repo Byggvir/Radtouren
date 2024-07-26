@@ -44,6 +44,7 @@ WD <- paste(SD[1:(length(SD)-1)],collapse='/')
 setwd(WD)
 
 source("R/lib/myfunctions.r")
+source("R/lib/tourdata.r")
 source("R/lib/sql.r")
 
 outdir <- 'png/'
@@ -63,71 +64,6 @@ td <- Sys.time()
 
 
 #
-# Function to convert JSON into data.table
-#
-
-json2dt <- function (fJSON, N = 1 ) {
-  
-  # Init data table
-  
-  n = length(fJSON$locations)
-  
-  cat(N,' ',  n, '\n' )
-  
-  temp = data.table(
-      tn = rep(N,n) # tournumber
-    , aw = rep( '', n ) #Alarm
-    , lat  = rep(0,n) # la
-    , lon = rep(0,n) # lo
-    , ele = rep(0,n) # ge
-    , distance  = rep(0,n) # gd
-    , slope     = rep(0,n) # sl 
-    , speed     = rep(0,n) # sp
-    , cadence   = rep(0,n) # cp
-    
-    , motor_p   = rep(0,n) # mw
-    , rider_p   = rep(0,n) # rw
-    , tm        = rep(0,n) # tm
-    , ts        = rep(Sys.time(),n) # ts
-    
-  )
-  
-  print(nrow(temp))
-  
-  # if (n > 1000) { n = 1005  }
-  
-  for (i in 1:n ) {
-    
-    if ( ! is_empty(which( "cp" == names(fJSON$locations[[i]] ) ) ) ) {
-      temp$lat[i]       = fJSON$locations[[i]]$la
-      temp$lon[i]       = fJSON$locations[[i]]$lo
-      temp$ele[i]       = fJSON$locations[[i]]$ge
-      temp$distance[i]  = fJSON$locations[[i]]$gd
-      temp$slope[i]     = fJSON$locations[[i]]$sl
-      
-      temp$speed[i]   = fJSON$locations[[i]]$sp
-      temp$cadence[i] = fJSON$locations[[i]]$cp
-      
-      temp$motor_p[i] = fJSON$locations[[i]]$mw
-      temp$rider_p[i] = fJSON$locations[[i]]$rw
-      temp$tm[i]       = fJSON$locations[[i]]$tm
-      temp$ts[i]       = as_datetime(fJSON$locations[[i]]$ts, tz = 'Europe/Berlin')
-      
-    }
-    else {
-      temp$aw[i] = 'PAUSE' 
-      }
-  }
-  
-  return(temp)
-  
-}
-
-#
-# End of function
-# 
-
-#
 # Constant values
 # 
 
@@ -137,52 +73,17 @@ citation <- paste( '(cc by 4.0) 2024 by Thomas Arend; Stand:', heute)
 
 
 #
-# List files in data/*.jsom
+# Get tours from data/*.json
 #
 
-fnames = dir('data', pattern = '*.json')
-
-#
-# Get first JSON-file an convert into data.table tour
-#
-
-nj <- jsonlite::read_json( paste0('data/',fnames[1]) ) 
-tour <- json2dt(nj, N = 1)
-
-# Create sub-title vector with name of first activity
-
-stitle <- nj$activity_name
-
-# Read remaining JSON-files and append to tour
-
-for ( j in 2:length(fnames)) {
-  
-  # Get next tour
-  
-  nj <- jsonlite::read_json( paste0('data/', fnames[j] ) )
-  
-  # Convert to data.table and append to tour
-  
-  nt <- json2dt( nj, N = j )
-  tour <- rbind( tour, nt )
-  
-  # append activity name to sub-title
-  
-  stitle <- c( stitle, nj$activity_name )
-  
-  }
-
-# End of for loop
-
-# Convert tour number into factor with activity names (stitle)
-
-tour$tn = factor( tour$tn, levels = unique(tour$tn), labels= stitle )
+tour = read_touren(fnames = dir('data', pattern = '*.json') )
+stitle = tour$titles
 
 #
 # Plot density rider power 
 #
 
-  tour %>% 
+  tour$touren %>% 
     filter( rider_p >= 0 & aw != 'PAUSE' ) %>% 
     ggplot( aes( x = rider_p , group = tn, colour = tn ) ) +
     geom_density(
@@ -213,7 +114,7 @@ tour$tn = factor( tour$tn, levels = unique(tour$tn), labels= stitle )
 # Plot density motor power
 #
   
-  tour %>% 
+  tour$touren  %>% 
     filter( motor_p > 0  & aw != 'PAUSE' ) %>% 
     ggplot( aes( x = motor_p, group = tn, colour = tn  ) ) +
     geom_density(
@@ -244,7 +145,7 @@ tour$tn = factor( tour$tn, levels = unique(tour$tn), labels= stitle )
 # Plot density cadence
 #
   
-  tour %>% 
+  tour$touren  %>% 
     filter( cadence > 0 & aw != 'PAUSE' ) %>% 
     ggplot( aes( x = cadence, group = tn, colour = tn  ) ) +
     geom_density(
@@ -275,7 +176,7 @@ tour$tn = factor( tour$tn, levels = unique(tour$tn), labels= stitle )
 # Plot density speed
 #
   
-  tour %>% 
+  tour$touren  %>% 
     filter( speed > 0  & aw != 'PAUSE' ) %>% 
     ggplot( aes( x = speed, group = tn, colour = tn  ) ) +
     geom_density(
@@ -295,6 +196,36 @@ tour$tn = factor( tour$tn, levels = unique(tour$tn), labels= stitle )
   
   ggsave(  file = paste( outdir, 'density_speed.png', sep = '')
            , plot = p4
+           , bg = "white"
+           , width = 1920
+           , height = 1080
+           , units = "px"
+           , dpi = 144 )
+
+#
+# Plot density slope
+#
+  
+  tour$touren  %>% 
+    filter( aw != 'PAUSE' ) %>% 
+    ggplot( aes( x = slope, group = tn, colour = tn  ) ) +
+    geom_density(
+      # binwidth = 10 
+    ) +
+    scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+    scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+    labs(  title = paste( 'Steigung', sep='')
+           , subtitle = paste( stitle, collapse = '\n' )
+           , x = 'Steigung [%]'
+           , y = 'Dichte' 
+           , caption = citation
+           , colour = 'Touren'  ) +
+    theme_ipsum() +
+    theme( 
+      legend.position = 'bottom') -> p5
+  
+  ggsave(  file = paste( outdir, 'density_slope.png', sep = '')
+           , plot = p5
            , bg = "white"
            , width = 1920
            , height = 1080
