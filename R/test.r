@@ -60,4 +60,4 @@ options(
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
-touren <- read_touren2( list.files(path = "data", pattern = "*.json", full.names = TRUE ) )
+touren <- read_touren( list.files(path = "data", pattern = "*.json", full.names = TRUE ) )

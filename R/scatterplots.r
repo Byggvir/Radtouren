@@ -70,16 +70,16 @@ citation <- paste( '(cc by 4.0) 2024 by Thomas Arend; Stand:', heute)
 # Get tours from data/*.json
 #
 
-tour = read_touren( fnames = dir('data', pattern = '*.json') )
-stitle = tour$titles
+touren = read_touren( fnames = list.files(path = "data", pattern = "*.json", full.names = TRUE) )
+stitle = touren$titles
 
   #
   # Scatterplots
   #
 
-  tour$touren %>%
-    filter( speed > 0 & cadence > 0 & aw != 'PAUSE' ) %>%
-    ggplot( aes( x = cadence , y = speed, group = tn, colour = tn ) ) +
+  touren$locations %>%
+    filter( sp > 0 & cp> 0 & aw != 'PAUSE' ) %>%
+    ggplot( aes( x = cp, y = sp, group = tn, colour = tn ) ) +
     geom_point(
     ) +
     scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
@@ -100,9 +100,9 @@ stitle = tour$titles
            , units = "px"
            , dpi = 144 )
 
-  tour$touren %>%
-    filter( cadence > 0 & rider_p > 0 & aw != 'PAUSE'  ) %>%
-    ggplot( aes( x = cadence , y = rider_p, group = tn, colour = tn ) ) +
+  touren$locations %>%
+    filter( cp > 0 & rw > 0 & aw != 'PAUSE'  ) %>%
+    ggplot( aes( x = cp, y = rw, group = tn, colour = tn ) ) +
     geom_point(
     ) +
     scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
@@ -123,9 +123,9 @@ stitle = tour$titles
            , units = "px"
            , dpi = 144 )
 
-  tour$touren %>%
-    filter( speed > 0 & rider_p > 0 & aw != 'PAUSE' ) %>%
-    ggplot( aes( x = speed , y = rider_p, group = tn, colour = tn ) ) +
+  touren$locations %>%
+    filter( sp > 0 & rw > 0 & aw != 'PAUSE' ) %>%
+    ggplot( aes( x = sp , y = rw, group = tn, colour = tn ) ) +
     geom_point(
     ) +
     scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
@@ -146,9 +146,9 @@ stitle = tour$titles
            , units = "px"
            , dpi = 144 )
 
-  tour$touren %>%
+  touren$locations %>%
     filter( aw != 'PAUSE' ) %>%
-    ggplot( aes( x = slope , y = rider_p, group = tn, colour = tn ) ) +
+    ggplot( aes( x = sl , y = rw, group = tn, colour = tn ) ) +
     geom_point(
     ) +
     scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
@@ -170,9 +170,9 @@ stitle = tour$titles
            , dpi = 144 )
 
 
-  tour$touren %>%
-    filter( speed > 0 & aw != 'PAUSE' ) %>%
-    ggplot( aes( x = slope , y = speed, group = tn, colour = tn ) ) +
+  touren$locations %>%
+    filter( sp > 0 & aw != 'PAUSE' ) %>%
+    ggplot( aes( x = sl , y = sp, group = tn, colour = tn ) ) +
     geom_smooth ( 
       method = 'glm'
       , formula = y ~ x

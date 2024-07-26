@@ -76,16 +76,16 @@ citation <- paste( '(cc by 4.0) 2024 by Thomas Arend; Stand:', heute)
 # Get tours from data/*.json
 #
 
-tour = read_touren(fnames = dir('data', pattern = '*.json') )
-stitle = tour$titles
+touren = read_touren( fnames = list.files(path = "data", pattern = "*.json", full.names = TRUE) )
+stitle = touren$titles
 
 #
 # Plot density rider power 
 #
 
-  tour$touren %>% 
-    filter( rider_p >= 0 & aw != 'PAUSE' ) %>% 
-    ggplot( aes( x = rider_p , group = tn, colour = tn ) ) +
+  touren$locations %>% 
+    filter( rw >= 0 & aw != 'PAUSE' ) %>% 
+    ggplot( aes( x = rw , group = tn, colour = tn ) ) +
     geom_density(
       # binwidth = 10 
     ) +
@@ -102,7 +102,7 @@ stitle = tour$titles
       legend.position = 'bottom'
     ) -> p1
   
-  ggsave(  file = paste( outdir, 'density_rider_p.png', sep = '')
+  ggsave(  file = paste( outdir, 'density_rider_w.png', sep = '')
            , plot = p1
            , bg = "white"
            , width = 1920
@@ -114,9 +114,9 @@ stitle = tour$titles
 # Plot density motor power
 #
   
-  tour$touren  %>% 
-    filter( motor_p > 0  & aw != 'PAUSE' ) %>% 
-    ggplot( aes( x = motor_p, group = tn, colour = tn  ) ) +
+  touren$locations  %>% 
+    filter( mw > 0  & aw != 'PAUSE' ) %>% 
+    ggplot( aes( x = mw, group = tn, colour = tn  ) ) +
     geom_density(
       # binwidth = 10 
     ) +
@@ -133,7 +133,7 @@ stitle = tour$titles
       legend.position = 'bottom'
     ) -> p2
   
-  ggsave(  file = paste( outdir, 'density_motor_p.png', sep = '')
+  ggsave(  file = paste( outdir, 'density_motor_w.png', sep = '')
            , plot = p2
            , bg = "white"
            , width = 1920
@@ -145,9 +145,9 @@ stitle = tour$titles
 # Plot density cadence
 #
   
-  tour$touren  %>% 
-    filter( cadence > 0 & aw != 'PAUSE' ) %>% 
-    ggplot( aes( x = cadence, group = tn, colour = tn  ) ) +
+  touren$locations  %>% 
+    filter( cp > 0 & aw != 'PAUSE' ) %>% 
+    ggplot( aes( x = cp, group = tn, colour = tn  ) ) +
     geom_density(
       # binwidth = 10 
     ) +
@@ -176,9 +176,9 @@ stitle = tour$titles
 # Plot density speed
 #
   
-  tour$touren  %>% 
-    filter( speed > 0  & aw != 'PAUSE' ) %>% 
-    ggplot( aes( x = speed, group = tn, colour = tn  ) ) +
+  touren$locations  %>% 
+    filter( sp > 0  & aw != 'PAUSE' ) %>% 
+    ggplot( aes( x = sp, group = tn, colour = tn  ) ) +
     geom_density(
       # binwidth = 10 
     ) +
@@ -206,9 +206,9 @@ stitle = tour$titles
 # Plot density slope
 #
   
-  tour$touren  %>% 
+  touren$locations  %>% 
     filter( aw != 'PAUSE' ) %>% 
-    ggplot( aes( x = slope, group = tn, colour = tn  ) ) +
+    ggplot( aes( x = sl, group = tn, colour = tn  ) ) +
     geom_density(
       # binwidth = 10 
     ) +

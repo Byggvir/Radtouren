@@ -76,16 +76,16 @@ citation <- paste( '(cc by 4.0) 2024 by Thomas Arend; Stand:', heute)
 # Get tours from data/*.json
 #
 
-tour = read_touren( fnames = list.files(path = "data", pattern = "*.json", full.names = TRUE) )
-stitle = tour$titles
+touren = read_touren( fnames = list.files(path = "data", pattern = "*.json", full.names = TRUE) )
+stitle = touren$titles
 
 #
 # Plot elevation distance
 #
 
-  tour$touren %>% 
+  touren$locations %>% 
     filter( aw != 'PAUSE' ) %>% 
-    ggplot( aes( x = distance / 1000, y = ele, group = tn, colour = tn ) ) +
+    ggplot( aes( x = gd / 1000, y = ge, group = tn, colour = tn ) ) +
     geom_line(
       # binwidth = 10 
     ) +
@@ -114,9 +114,9 @@ stitle = tour$titles
   # Plot elevation distance
   #
   
-  tour$touren %>% 
+  touren$locations %>% 
     filter( aw != 'PAUSE' ) %>% 
-    ggplot( aes( x = distance / 1000, y = speed, group = tn, colour = tn ) ) +
+    ggplot( aes( x = gd / 1000, y = sp, group = tn, colour = tn ) ) +
     geom_line(
       # binwidth = 10 
     ) +

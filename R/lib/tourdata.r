@@ -2,6 +2,9 @@
 # Function to convert JSON into data.table
 #
 
+
+locnames = c( "al", "aw", "cp", "gd", "ge", "la", "lo", "mp", "mw", "or", "rw", "sl", "sp", "tm", "ts" )
+
 json2tour <- function (fJSON ) {
   
   # Init data table
@@ -9,19 +12,23 @@ json2tour <- function (fJSON ) {
   n = length(fJSON$locations)
   
   temp = data.table(
-      aw = rep( '', n ) #Alarm
-    , lat  = rep(0,n) # la
-    , lon = rep(0,n) # lo
-    , ele = rep(0,n) # ge
-    , distance  = rep(0,n) # gd
-    , slope     = rep(0,n) # sl 
-    , speed     = rep(0,n) # sp
-    , cadence   = rep(0,n) # cp
-    , al        = rep(0,n) # al
-    , motor_p   = rep(0,n) # mw
-    , rider_p   = rep(0,n) # rw
-    , tm        = rep(0,n) # tm
-    , ts        = rep(Sys.time(),n) # ts
+    
+      al = rep(0,n) # al Unterstützungslevel
+    , aw = rep( '', n ) # Alarm
+   # , bt = rep( '', n ) # Batterie
+    , cp = rep(0,n) # cp
+    , gd = rep(0,n) # gd Distanz ab Start
+    , ge = rep(0,n) # ge Elevation
+    , la = rep(0,n) # la latitude
+    , lo = rep(0,n) # lo Longitude
+    , mp = rep(0,n) # mw Motor Power?
+    , mw = rep(0,n) # mw Motor Watt
+    , or = rep(0,n) # or ??
+    , rw = rep(0,n) # rw
+    , sl = rep(0,n) # sl 
+    , sp = rep(0,n) # sp
+    , tm = rep(0,n) # tm
+    , ts = rep('',n) # ts
     
   )
   
@@ -29,26 +36,38 @@ json2tour <- function (fJSON ) {
   
   for (i in 1:n ) {
     
-    if ( ! is_empty(which( "cp" == names(fJSON$locations[[i]] ) ) ) ) {
-      temp$lat[i]     = fJSON$locations[[i]]$la
-      temp$lon[i]     = fJSON$locations[[i]]$lo
-      temp$ele[i]     = fJSON$locations[[i]]$ge
-      temp$distance[i]= fJSON$locations[[i]]$gd
-      temp$slope[i]   = fJSON$locations[[i]]$sl
+    for (j in 1:length(locnames) ) {
       
-      temp$speed[i]   = fJSON$locations[[i]]$sp
-      temp$cadence[i] = fJSON$locations[[i]]$cp
+      vnames = names(fJSON$locations[[i]])
       
-      temp$al[i]      = fJSON$locations[[i]]$al
-      temp$motor_p[i] = fJSON$locations[[i]]$mw
-      temp$rider_p[i] = fJSON$locations[[i]]$rw
-      temp$tm[i]      = fJSON$locations[[i]]$tm
-      temp$ts[i]      = as_datetime(fJSON$locations[[i]]$ts, tz = 'Europe/Berlin')
-      
+      if ( ! is_empty(which( locnames[j] == vnames ) ) ) {
+         
+       temp[i,j] = get(locnames[j],fJSON$locations[[i]])
+       
+      }
     }
-    else {
-      temp$aw[i] = 'PAUSE' 
-    }
+    
+  #   if ( ! is_empty(which( "cp" == vnames ) ) ) {
+  #     temp$la[i] = fJSON$locations[[i]]$la
+  #     temp$lo[i] = fJSON$locations[[i]]$lo
+  #     temp$el[i] = fJSON$locations[[i]]$ge
+  #     temp$gd[i] = fJSON$locations[[i]]$gd
+  #     temp$sl[i] = fJSON$locations[[i]]$sl
+  #     
+  #     temp$sp[i] = fJSON$locations[[i]]$sp
+  #     temp$cp[i] = fJSON$locations[[i]]$cp
+  #     
+  #     temp$al[i] = fJSON$locations[[i]]$al
+  #     temp$mw[i] = fJSON$locations[[i]]$mw
+  #     temp$rw[i] = fJSON$locations[[i]]$rw
+  #     temp$tm[i] = fJSON$locations[[i]]$tm
+  #     temp$ts[i] = as_datetime(fJSON$locations[[i]]$ts, tz = 'Europe/Berlin')
+  #     
+  #   }
+  #   else {
+  #     temp$aw[i] = 'PAUSE' 
+  #   }
+  
   }
   
   return(temp)
@@ -91,6 +110,6 @@ read_touren <- function ( fnames ) {
   }
   
   mtouren$tn = factor(mtouren$tn, levels = 1:length(touren) , labels = titles )
-  return( list(titles = titles, touren = mtouren  ) )
+  return( list(titles = titles, locations = mtouren  ) )
   
 }
