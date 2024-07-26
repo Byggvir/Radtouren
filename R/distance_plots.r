@@ -76,7 +76,7 @@ citation <- paste( '(cc by 4.0) 2024 by Thomas Arend; Stand:', heute)
 # Get tours from data/*.json
 #
 
-tour = read_touren(fnames = dir('data', pattern = '*.json') )
+tour = read_touren( fnames = list.files(path = "data", pattern = "*.json", full.names = TRUE) )
 stitle = tour$titles
 
 #

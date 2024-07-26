@@ -1,3 +1,7 @@
+# Eigene Touren-Daten
+
+data/thomas/*
+
 # History files
 .Rhistory
 .Rapp.history

@@ -2,17 +2,14 @@
 # Function to convert JSON into data.table
 #
 
-json2tour <- function (fJSON, N = 1 ) {
+json2tour <- function (fJSON ) {
   
   # Init data table
   
   n = length(fJSON$locations)
   
-  cat(N,' ',  n, '\n' )
-  
   temp = data.table(
-    tn = rep(N,n) # tournumber
-    , aw = rep( '', n ) #Alarm
+      aw = rep( '', n ) #Alarm
     , lat  = rep(0,n) # la
     , lon = rep(0,n) # lo
     , ele = rep(0,n) # ge
@@ -20,7 +17,7 @@ json2tour <- function (fJSON, N = 1 ) {
     , slope     = rep(0,n) # sl 
     , speed     = rep(0,n) # sp
     , cadence   = rep(0,n) # cp
-    , asssit_l  = rep(0,n) # al
+    , al        = rep(0,n) # al
     , motor_p   = rep(0,n) # mw
     , rider_p   = rep(0,n) # rw
     , tm        = rep(0,n) # tm
@@ -29,8 +26,6 @@ json2tour <- function (fJSON, N = 1 ) {
   )
   
   print(nrow(temp))
-  
-  # if (n > 1000) { n = 1005  }
   
   for (i in 1:n ) {
     
@@ -63,6 +58,14 @@ json2tour <- function (fJSON, N = 1 ) {
 # End of function
 # 
 
+#
+# Title of tour in JSON file = activity name
+#
+
+tour_title <- function( tour_json ) {
+  
+  return(tour_json$activity_name)
+}
 
 read_touren <- function ( fnames ) {
   
@@ -70,35 +73,24 @@ read_touren <- function ( fnames ) {
   # Get first JSON-file and convert into data.table tour
   #
   
-  tour_json <- jsonlite::read_json( paste0('data/',fnames[1]) ) 
-  tour <- json2tour(tour_json, N = 1)
+  tour_json <- lapply( fnames, function(x) jsonlite::read_json( x ) )
+  touren <- lapply(tour_json, function (x) json2tour (x) )
+  titles <- lapply(tour_json, function (x) tour_title(x) )
   
-  # Create sub-title vector with name of first activity
+  for (i in 1:length(touren)) {
+    touren[[i]]$tn = i
+  }
   
-  ttitles <- tour_json$activity_name
+  mtouren= touren[[1]]
+  if ( length(touren) > 1) {
+    
+    mtouren <- touren[[1]]
+    for (i in 2:length(touren)) {
+      mtouren <- rbind(mtouren, touren[[i]])
+    }
+  }
   
-  # Read remaining JSON-files and append to tour
+  mtouren$tn = factor(mtouren$tn, levels = 1:length(touren) , labels = titles )
+  return( list(titles = titles, touren = mtouren  ) )
   
-  for ( j in 2:length(fnames)) {
-    
-    # Get next tour
-    
-    tour_json <- jsonlite::read_json( paste0('data/', fnames[j] ) )
-    
-    # Convert to data.table and append to tour
-    
-    tour <- rbind( tour, json2tour( tour_json, N = j ) )
-    
-    # append activity name to sub-title
-    
-    ttitles <- c( ttitles, tour_json$activity_name )
-    
-  } # End of for loop
-  
-  # Convert tour number into factor with activity names (stitle)
-  
-  tour$tn = factor( tour$tn, levels = unique(tour$tn), labels= ttitles )
-  
-  return( list( titles = ttitles , touren = tour ))
-
 }
